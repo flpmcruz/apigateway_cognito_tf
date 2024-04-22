@@ -1,0 +1,97 @@
+name: "Pull Request CI/CD Pipeline"
+
+on:
+  pull_request:
+    branches:
+      - main
+
+env:
+  INFRA_DIR: "infra/environments/prod"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      ## AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - run: aws sts get-caller-identity
+
+      ## Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.3"
+
+      - name: Terraform fmt
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform fmt -check -recursive .
+        continue-on-error: true
+
+      - name: Terraform Init
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform validate -no-color
+
+      - name: Terraform Plan
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform plan
+
+      ## TFLint
+      - uses: terraform-linters/setup-tflint@v4
+        name: Setup TFLint
+        with:
+          tflint_version: v0.50.3
+
+      - name: Init TFLint
+        working-directory: ${{ env.INFRA_DIR }}
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Run TFLint
+        working-directory: ${{ env.INFRA_DIR }}
+        run: tflint -f compact
+
+      ## Tfsec
+      - name: tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          soft_fail: true
+
+      # Infracost
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generate Infracost cost estimate baseline
+        id: infracost-baseline
+        working-directory: ${{ env.INFRA_DIR }}
+        run: |
+          infracost breakdown --path="." \
+            --format=json \
+            --out-file=/tmp/infracost-base.json \
+            --terraform-force-cli
+
+      - name: Post Infracost comment
+        working-directory: ${{ env.INFRA_DIR }}
+        run: |
+          infracost comment github --path /tmp/infracost-base.json \
+            --repo $GITHUB_REPOSITORY \
+            --github-token ${{ secrets.PR_COMMENT_TOKEN }} \
+            --pull-request ${{ github.event.pull_request.number }} \
+            --behavior update
+      
+      # Run Frontend tests

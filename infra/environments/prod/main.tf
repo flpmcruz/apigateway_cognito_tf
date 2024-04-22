@@ -21,7 +21,7 @@ module "apigateway" {
   pool_name         = "${var.pool_name}-${var.environment}"
 
   lambda_name      = "${var.lambda_name}-${var.environment}"
-  source_code_path = "../../../backend/dev/index.js"
+  source_code_path = "../../../backend/prod/index.js"
 
   waf_acl_name   = "${var.waf_acl_name}-${var.environment}"
   create_waf_acl = true

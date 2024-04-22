@@ -14,7 +14,7 @@
    AWS_ACCESS_KEY_ID=your_aws_access_key_id
    AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
    INFRACOST_API_KEY=your_infracost_api_key
-   REPO_TOKEN=your_github_token_with_repo_permissions_and_pull_requests_comments
+   PR_COMMENT_TOKEN=your_github_token_with_repo_permissions_and_pull_requests_comments
 ```
 
 3. Apply backend configuration
@@ -30,21 +30,45 @@ terraform apply -auto-approve
 
 ```bash
 # environments/dev/variables.auto.tfvars
+# environments/prod/variables.auto.tfvars
 ```
 
-5. Test the code:
+5. TEST THE INFRASTRUCTURE
 
 - Push a commit to the dev branch and check the pipeline output and resources created in aws
 - Create a pull request from dev to main and check the pipeline output
 - Merge the pull request and check the pipeline output and resources created in aws
 
 Expected resources created in AWS:
+
 - S3 bucket for hosting the frontend
 - CloudFront distribution for the frontend
 - API Gateway for the backend
 - Lambda function for the backend
 - Waf ACL and Waf Rule for the API Gateway
 - Cognito User Pool for the frontend
+
+Get Token if you want to Test API with Postman
+
+```bash
+# GET TOKEN
+# Infra generate an example user with username: username and password: Test@123
+# Update user-pool-id and client-id with the values from the cognito user pool created
+
+aws cognito-idp admin-initiate-auth \
+  --user-pool-id "us-east-1_IGv099cF7" \
+  --client-id "7brl23ek16gshsn9jdch9rii7a" \
+  --auth-flow ADMIN_NO_SRP_AUTH \
+  --auth-parameters USERNAME=username,PASSWORD=Test@123 \
+  --region us-east-1
+```
+
+Update API_URL in the script load-test.yml with the API Gateway URL
+
+```bash
+# RUN THE LOAD TEST
+artillery run load-test.yml
+```
 
 6. Destroy the infrastructure
 
