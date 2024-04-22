@@ -1,0 +1,5 @@
+aws_region               = "us-east-1"
+prod_backend_bucket_name = "prod-terraformstatebucket"
+prod_backend_table_name  = "prod-terraformstatelock"
+dev_backend_bucket_name  = "mydevbucket8j89p"
+dev_backend_table_name   = "my-dev-table"
