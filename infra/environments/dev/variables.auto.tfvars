@@ -1,0 +1,7 @@
+environment       = "dev"
+aws_region        = "us-east-1"
+api_name          = "my-api"
+api_resource_path = "my-api"
+pool_name         = "my-pool"
+waf_acl_name      = "my-waf"
+lambda_name       = "my-lambda"
