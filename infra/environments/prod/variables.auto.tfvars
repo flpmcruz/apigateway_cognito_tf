@@ -1,4 +1,4 @@
-environment       = "dev"
+environment       = "prod"
 aws_region        = "us-east-1"
 api_name          = "my-api"
 api_resource_path = "my-api"

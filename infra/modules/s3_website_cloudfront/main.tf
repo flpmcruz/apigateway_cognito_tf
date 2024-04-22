@@ -7,7 +7,7 @@ resource "random_string" "random" {
 resource "aws_s3_bucket" "bucket" {
   bucket        = "revbucket-${random_string.random.result}"
   force_destroy = true
-  tags = var.tags
+  tags          = var.tags
 }
 
 resource "aws_s3_bucket_versioning" "versioning_example" {
@@ -56,8 +56,12 @@ resource "aws_s3_bucket_acl" "example" {
   acl    = "private"
 }
 
+locals {
+  origin = "S3-Origin-${random_string.random.result}"
+}
+
 resource "aws_cloudfront_origin_access_control" "default" {
-  name                              = var.name
+  name                              = local.origin
   description                       = "Descripcion OAC"
   origin_access_control_origin_type = "s3"
   signing_behavior                  = "always"
@@ -81,10 +85,6 @@ resource "aws_s3_bucket_policy" "bucket-policy" {
       }
     ]
   })
-}
-
-locals {
-  origin = "S3-Origin-${random_string.random.result}"
 }
 
 #############################################################################################################
