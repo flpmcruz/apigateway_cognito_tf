@@ -5,6 +5,14 @@ locals {
   }
 }
 
+module "my_website" {
+  source      = "../../modules/s3_website_cloudfront"
+  name        = "${var.distribution_name}-${var.environment}"
+  price_class = var.price_class
+
+  tags = local.common_tags
+}
+
 module "apigateway" {
   source            = "../../modules/apigateway"
   name              = "${var.api_name}-${var.environment}"
@@ -16,7 +24,7 @@ module "apigateway" {
   source_code_path = "../../../backend/dev/index.js"
 
   waf_acl_name   = "${var.waf_acl_name}-${var.environment}"
-  create_waf_acl = true
+  create_waf_acl = false
 
   tags = local.common_tags
 }

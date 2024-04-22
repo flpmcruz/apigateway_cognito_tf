@@ -33,3 +33,13 @@ variable "lambda_name" {
   description = "Name of the Lambda function"
   type        = string
 }
+
+variable "price_class" {
+  description = "Price class for CloudFront distribution"
+  type        = string
+}
+
+variable "distribution_name" {
+  description = "Name of the CloudFront distribution"
+  type        = string
+}

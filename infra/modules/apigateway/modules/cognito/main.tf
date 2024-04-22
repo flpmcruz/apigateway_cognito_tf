@@ -36,7 +36,7 @@ resource "aws_cognito_user_pool_client" "client" {
 # Create a Cognito User to test the API
 resource "aws_cognito_user" "example" {
   user_pool_id = aws_cognito_user_pool.pool.id
-  username     = "flpmireles"
+  username     = "username"
   password     = "Test@123"
 
   attributes = {
