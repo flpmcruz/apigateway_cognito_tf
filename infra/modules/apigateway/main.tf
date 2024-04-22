@@ -73,6 +73,14 @@ resource "aws_api_gateway_integration_response" "options_integration_response" {
     aws_api_gateway_method.options,
     aws_api_gateway_integration.options_integration,
   ]
+
+  lifecycle {
+    create_before_destroy = true
+    replace_triggered_by = [
+      aws_api_gateway_method_response.options_response
+    ]
+  }
+
 }
 
 # 3. Create a POST method
@@ -130,6 +138,7 @@ resource "aws_api_gateway_integration_response" "proxy" {
     aws_api_gateway_method.proxy,
     aws_api_gateway_integration.lambda_integration
   ]
+
 }
 
 ############################################################################################################
