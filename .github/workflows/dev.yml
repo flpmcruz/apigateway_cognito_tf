@@ -1,0 +1,130 @@
+name: "Dev Environment CI/CD Pipeline"
+
+on:
+  push:
+    branches:
+      - dev
+
+env:
+  INFRA_DIR: "infra/environments/dev"
+  FRONTEND_DIR: "frontend"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      ## AWS
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - run: aws sts get-caller-identity
+
+      ## Terraform
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.7.3"
+
+      - name: Terraform fmt
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform fmt -check -recursive .
+        continue-on-error: true
+
+      - name: Terraform Init
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform init
+
+      - name: Terraform Validate
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform validate -no-color
+
+      ## TFLint
+      - uses: terraform-linters/setup-tflint@v4
+        name: Setup TFLint
+        with:
+          tflint_version: v0.50.3
+
+      - name: Init TFLint
+        run: tflint --init
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: Run TFLint
+        run: tflint -f compact
+
+      ## Tfsec
+      - name: tfsec
+        uses: aquasecurity/tfsec-action@v1.0.0
+        with:
+          soft_fail: true
+
+      # Infracost
+      - name: Setup Infracost
+        uses: infracost/actions/setup@v3
+        with:
+          api-key: ${{ secrets.INFRACOST_API_KEY }}
+
+      - name: Generate Infracost cost estimate baseline
+        working-directory: ${{ env.INFRA_DIR }}
+        run: |
+          infracost breakdown --path="." \
+            --terraform-force-cli
+
+      - name: Apply Terraform Plan
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform apply -auto-approve
+        continue-on-error: false
+
+      ## Sync S3 Bucket
+      - name: Outputs Terraform to file
+        working-directory: ${{ env.INFRA_DIR }}
+        run: terraform output -json > /tmp/outputs.json
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Install dependencies
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm install
+
+      - name: Run Tests
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm run test
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Extract Outputs for Build Vite App and Sync to S3
+        id: extract_envs
+        run: |
+          BUCKET_NAME=$(jq -r '.s3_bucket_name.value' /tmp/outputs.json)
+          API_URL=$(jq -r '.api_url.value' /tmp/outputs.json)
+          COGNITO_CLIENT_ID=$(jq -r '.cognito_client_id.value' /tmp/outputs.json)
+          COGNITO_USER_POOL_ID=$(jq -r '.cognito_user_pool_id.value' /tmp/outputs.json)
+          echo "Bucket Name: $BUCKET_NAME"
+          echo "API URL: $API_URL"
+          echo "Cognito Client ID: $COGNITO_CLIENT_ID"
+          echo "Cognito User Pool ID: $COGNITO_USER_POOL_ID"
+          echo "BUCKET_NAME=$BUCKET_NAME" >> $GITHUB_ENV
+          echo "VITE_API_URL=$API_URL" >> $GITHUB_ENV
+          echo "VITE_COGNITO_CLIENT_ID=$COGNITO_CLIENT_ID" >> $GITHUB_ENV
+          echo "VITE_COGNITO_USER_POOL_ID=$COGNITO_USER_POOL_ID" >> $GITHUB_ENV
+
+      - name: Run Build
+        working-directory: ${{ env.FRONTEND_DIR }}
+        run: npm run build
+
+      - name: Sync S3 Bucket
+        working-directory: ${{ env.FRONTEND_DIR }}/dist
+        run: |
+          aws s3 sync . s3://$BUCKET_NAME --delete
+        continue-on-error: false
