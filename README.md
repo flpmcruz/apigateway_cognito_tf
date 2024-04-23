@@ -11,10 +11,10 @@
 2. Set secrets on GitHub
 
 ```bash
-   AWS_ACCESS_KEY_ID=your_aws_access_key_id
-   AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
-   INFRACOST_API_KEY=your_infracost_api_key
-   PR_COMMENT_TOKEN=your_github_token_with_repo_permissions_and_pull_requests_comments
+AWS_ACCESS_KEY_ID=your_aws_access_key_id
+AWS_SECRET_ACCESS_KEY=your_aws_secret_access_key
+INFRACOST_API_KEY=your_infracost_api_key
+PR_COMMENT_TOKEN=your_github_token_with_repo_permissions_and_pull_requests_comments
 ```
 
 3. Apply backend configuration

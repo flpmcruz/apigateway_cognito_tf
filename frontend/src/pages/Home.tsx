@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom"
 
 function Home() {
     const [response, setResponse] = useState<any>(null)
+    const [error, setError] = useState<any>(null)
     const navigate = useNavigate()
 
     const testApi = () => {
@@ -18,6 +19,7 @@ function Home() {
             })
             .catch((error) => {
                 console.error('Error:', error)
+                setError("There was an error, please try again or logout and login")
             })
     }
 
@@ -67,6 +69,10 @@ function Home() {
                         }</p>
                         <span className="inline-block h-1 w-10 rounded bg-indigo-500 mt-8 mb-6"></span>
                         <h2 className="text-gray-900 font-medium title-font tracking-wider text-sm">{localStorage.getItem("user") ? `Hello: ${localStorage.getItem("user") ?? ""}` : "Unathorized"}</h2>
+                        <p className="text-gray-500">This is a protected info with Cognito User Pool</p>
+                        {
+                            error && <p className="text-red-500">{error}</p>
+                        }
                         <p className="text-gray-500">This is a protected info with Cognito User Pool</p>
                         <button onClick={testApi} className="inline-flex text-white bg-indigo-500 border-0 py-2 px-6 mt-8 focus:outline-none hover:bg-indigo-600 rounded text-lg">Test API</button>
                     </div>

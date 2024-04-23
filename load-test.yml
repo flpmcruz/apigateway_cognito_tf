@@ -1,6 +1,7 @@
 config:
-  target: API_URL_TO_TEST
+  target: API_URL_TO_TEST # update
   phases:
+    # update each one of the phases with the desired values
     - duration: 60
       arrivalRate: 1
       rampTo: 5
@@ -27,5 +28,5 @@ scenarios:
   - flow:
       - loop:
           - get:
-              url: "/dino"
+              url: "/<PATH>"
         count: 100

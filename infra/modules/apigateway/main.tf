@@ -40,6 +40,13 @@ resource "aws_api_gateway_integration" "options_integration" {
   request_templates = {
     "application/json" = "{\"statusCode\": 200}"
   }
+
+  lifecycle {
+    create_before_destroy = true
+    replace_triggered_by = [
+      aws_api_gateway_method_response.options_response
+    ]
+  }
 }
 
 resource "aws_api_gateway_method_response" "options_response" {
@@ -217,6 +224,7 @@ module "waf" {
   source = "./modules/waf"
   name   = var.waf_acl_name
   count  = var.create_waf_acl ? 1 : 0
+  tags = var.tags
 }
 resource "aws_wafv2_web_acl_association" "api-waf" {
   count        = var.create_waf_acl ? 1 : 0
@@ -230,6 +238,7 @@ resource "aws_wafv2_web_acl_association" "api-waf" {
 module "cognito" {
   source    = "./modules/cognito"
   pool_name = var.pool_name
+  tags      = var.tags
 }
 resource "aws_api_gateway_authorizer" "cognito_authorizer" {
   name          = "my_apig_authorizer"
