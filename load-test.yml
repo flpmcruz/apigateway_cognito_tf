@@ -1,5 +1,5 @@
 config:
-  target: API_URL_TO_TEST # update
+  target: "{{ $env.API_BASE_URL_PATH }}"
   phases:
     # update each one of the phases with the desired values
     - duration: 60
@@ -28,5 +28,7 @@ scenarios:
   - flow:
       - loop:
           - get:
-              url: "/<PATH>"
+              url: "/{{ $env.ARTILLERY_TEST_PATH }}"
+              headers:
+                Authorization: "Bearer {{ $env.ACCESS_TOKEN }}"
         count: 100

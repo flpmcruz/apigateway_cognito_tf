@@ -5,8 +5,7 @@
 # Steps to reproduce
 
 1. Clone this repository with all branches (main and dev) or create a new repository with the same structure
-   Note that dev branch is used to deploy the dev environment and main branch is used to deploy the prod environment
-   Each branch has its own CI/CD pipeline
+   Note that dev branch is used to deploy the dev environment and main branch is used to deploy the prod environment. Each branch has its own CI/CD pipeline
 
 2. Set secrets on GitHub
 
@@ -63,10 +62,11 @@ aws cognito-idp admin-initiate-auth \
   --region us-east-1
 ```
 
-Update API_URL in the script load-test.yml with the API Gateway URL
-
 ```bash
-# RUN THE LOAD TEST
+# Set environment variables for artillery:
+# API_BASE_URL_PATH: API Gateway URL
+# ACCESS_TOKEN: Access token from the cognito user pool
+# ARTILLERY_TEST_PATH: Path to the test script
 artillery run load-test.yml
 ```
 
